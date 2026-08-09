@@ -1,5 +1,11 @@
 package webroute
 
+type ProviderName string
+
+const (
+	ProviderNameNginxProxy ProviderName = "nginx-proxy"
+)
+
 // Provider resolves web routes for a specific reverse proxy from env values.
 type Provider interface {
 	// Resolve resolves routes from normalized environment map.

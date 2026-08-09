@@ -45,9 +45,10 @@ func (*NginxProxyProvider) Resolve(service Service) ([]Route, error) {
 		}
 
 		routes = append(routes, Route{
-			Domain:  domain,
-			Address: domain + "/" + virtualPath,
-			Port:    virtualPort,
+			Provider: ProviderNameNginxProxy,
+			Domain:   domain,
+			Address:  domain + "/" + virtualPath,
+			Port:     virtualPort,
 		})
 	}
 

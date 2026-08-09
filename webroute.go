@@ -2,6 +2,8 @@ package webroute
 
 // Route is a single public endpoint route for a service.
 type Route struct {
+	Provider ProviderName `json:"provider"`
+
 	// Domain is a public domain where service is available.
 	Domain string `json:"domain"`
 	// Address is a full host and path value used for direct HTTP calls.

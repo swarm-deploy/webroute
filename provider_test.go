@@ -22,14 +22,16 @@ func TestNginxProxyProvider_Resolve(t *testing.T) {
 			}},
 			Expected: []Route{
 				{
-					Domain:  "api.example.com",
-					Address: "api.example.com/v1",
-					Port:    "8080",
+					Provider: ProviderNameNginxProxy,
+					Domain:   "api.example.com",
+					Address:  "api.example.com/v1",
+					Port:     "8080",
 				},
 				{
-					Domain:  "admin.example.com",
-					Address: "admin.example.com/v1",
-					Port:    "8080",
+					Provider: ProviderNameNginxProxy,
+					Domain:   "admin.example.com",
+					Address:  "admin.example.com/v1",
+					Port:     "8080",
 				},
 			},
 		},
@@ -41,9 +43,10 @@ func TestNginxProxyProvider_Resolve(t *testing.T) {
 			}},
 			Expected: []Route{
 				{
-					Domain:  "app.example.com",
-					Address: "app.example.com/",
-					Port:    "80",
+					Provider: ProviderNameNginxProxy,
+					Domain:   "app.example.com",
+					Address:  "app.example.com/",
+					Port:     "80",
 				},
 			},
 		},
