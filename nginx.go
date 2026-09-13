@@ -1,6 +1,7 @@
 package webroute
 
 import (
+	"context"
 	"fmt"
 	"strings"
 )
@@ -19,7 +20,7 @@ func NewNginxProxyProvider() *NginxProxyProvider {
 }
 
 // Resolve resolves nginx-proxy routes from env values.
-func (*NginxProxyProvider) Resolve(service Service) ([]Route, error) {
+func (*NginxProxyProvider) Resolve(_ context.Context, service Service) ([]Route, error) {
 	env, err := service.Environment()
 	if err != nil {
 		return nil, fmt.Errorf("get environment variables: %w", err)
@@ -46,9 +47,11 @@ func (*NginxProxyProvider) Resolve(service Service) ([]Route, error) {
 
 		routes = append(routes, Route{
 			Provider: ProviderNameNginxProxy,
-			Domain:   domain,
-			Address:  domain + "/" + virtualPath,
-			Port:     virtualPort,
+			From: Address{
+				Domain:  domain,
+				Address: domain + "/" + virtualPath,
+				Port:    virtualPort,
+			},
 		})
 	}
 

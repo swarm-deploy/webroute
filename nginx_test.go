@@ -1,6 +1,7 @@
 package webroute
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,15 +24,19 @@ func TestNginxProxyProvider_Resolve(t *testing.T) {
 			Expected: []Route{
 				{
 					Provider: ProviderNameNginxProxy,
-					Domain:   "api.example.com",
-					Address:  "api.example.com/v1",
-					Port:     "8080",
+					From: Address{
+						Domain:  "api.example.com",
+						Address: "api.example.com/v1",
+						Port:    "8080",
+					},
 				},
 				{
 					Provider: ProviderNameNginxProxy,
-					Domain:   "admin.example.com",
-					Address:  "admin.example.com/v1",
-					Port:     "8080",
+					From: Address{
+						Domain:  "admin.example.com",
+						Address: "admin.example.com/v1",
+						Port:    "8080",
+					},
 				},
 			},
 		},
@@ -44,9 +49,11 @@ func TestNginxProxyProvider_Resolve(t *testing.T) {
 			Expected: []Route{
 				{
 					Provider: ProviderNameNginxProxy,
-					Domain:   "app.example.com",
-					Address:  "app.example.com/",
-					Port:     "80",
+					From: Address{
+						Domain:  "app.example.com",
+						Address: "app.example.com/",
+						Port:    "80",
+					},
 				},
 			},
 		},
@@ -56,18 +63,10 @@ func TestNginxProxyProvider_Resolve(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Title, func(t *testing.T) {
-			got, err := provider.Resolve(test.Service)
+			got, err := provider.Resolve(context.Background(), test.Service)
 			require.NoError(t, err)
 
 			assert.Equal(t, test.Expected, got)
 		})
 	}
-}
-
-type testService struct {
-	environment map[string]string
-}
-
-func (s *testService) Environment() (map[string]string, error) {
-	return s.environment, nil
 }
