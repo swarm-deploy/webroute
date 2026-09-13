@@ -1,4 +1,4 @@
-package webroute
+package providers
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/swarm-deploy/webroute/api"
-	"github.com/swarm-deploy/webroute/providers"
 )
 
 func TestNginxProxyProvider_Resolve(t *testing.T) {
@@ -145,7 +144,7 @@ service2.example.org:
 		},
 	}
 
-	provider := providers.NewNginxProxyProvider()
+	provider := NewNginxProxyProvider()
 
 	for _, test := range tests {
 		t.Run(test.Title, func(t *testing.T) {

@@ -1,4 +1,4 @@
-package webroute
+package providers
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/swarm-deploy/webroute/api"
-	"github.com/swarm-deploy/webroute/providers"
 )
 
 func TestAgentgatewayProvider_Resolve(t *testing.T) {
@@ -302,7 +301,7 @@ routes:
 		},
 	}
 
-	provider := providers.NewAgentgatewayProvider()
+	provider := NewAgentgatewayProvider()
 
 	for _, test := range tests {
 		t.Run(test.Title, func(t *testing.T) {
@@ -317,7 +316,7 @@ routes:
 func TestAgentgatewayProvider_ResolvePassesContextToConfigRead(t *testing.T) {
 	type contextKey struct{}
 
-	provider := providers.NewAgentgatewayProvider()
+	provider := NewAgentgatewayProvider()
 	ctx := context.WithValue(context.Background(), contextKey{}, "caller context")
 	service := &testService{configs: []api.ServiceConfig{
 		testConfig{
