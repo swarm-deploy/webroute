@@ -3,6 +3,7 @@ module github.com/swarm-deploy/webroute
 go 1.25.0
 
 require (
+	github.com/buildkite/interpolate v0.1.5
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
 )

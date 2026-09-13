@@ -8,8 +8,9 @@ import (
 type ProviderName string
 
 const (
-	ProviderNameNginxProxy ProviderName = "nginx-proxy"
-	ProviderNamePomerium   ProviderName = "pomerium"
+	ProviderNameAgentgateway ProviderName = "agentgateway"
+	ProviderNameNginxProxy   ProviderName = "nginx-proxy"
+	ProviderNamePomerium     ProviderName = "pomerium"
 )
 
 // Provider resolves web routes for a specific reverse proxy from env values.
@@ -33,5 +34,6 @@ func Providers() []Provider {
 	return []Provider{
 		NewNginxProxyProvider(),
 		NewPomeriumProvider(),
+		NewAgentgatewayProvider(),
 	}
 }

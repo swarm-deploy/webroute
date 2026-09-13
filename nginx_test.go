@@ -57,6 +57,90 @@ func TestNginxProxyProvider_Resolve(t *testing.T) {
 				},
 			},
 		},
+		{
+			Title: "root virtual path",
+			Service: &testService{environment: map[string]string{
+				"VIRTUAL_HOST": "app.example.com",
+				"VIRTUAL_PATH": "/",
+				"VIRTUAL_PORT": "80",
+			}},
+			Expected: []Route{
+				{
+					Provider: ProviderNameNginxProxy,
+					From: Address{
+						Domain:  "app.example.com",
+						Address: "app.example.com/",
+						Port:    "80",
+					},
+				},
+			},
+		},
+		{
+			Title: "virtual host with port",
+			Service: &testService{environment: map[string]string{
+				"VIRTUAL_HOST": "admin.example.com:8443",
+				"VIRTUAL_PATH": "/admin",
+				"VIRTUAL_PORT": "8080",
+			}},
+			Expected: []Route{
+				{
+					Provider: ProviderNameNginxProxy,
+					From: Address{
+						Domain:  "admin.example.com",
+						Address: "admin.example.com:8443/admin",
+						Port:    "8080",
+					},
+				},
+			},
+		},
+		{
+			Title: "virtual host multiports",
+			Service: &testService{environment: map[string]string{
+				"VIRTUAL_HOST": "ignored.example.com",
+				"VIRTUAL_HOST_MULTIPORTS": `
+www.example.org:
+service1.example.org:
+  "/":
+    port: 8000
+service2.example.org:
+  "/api":
+    port: "9000"
+  "/healthz":
+`,
+			}},
+			Expected: []Route{
+				{
+					Provider: ProviderNameNginxProxy,
+					From: Address{
+						Domain:  "service1.example.org",
+						Address: "service1.example.org/",
+						Port:    "8000",
+					},
+				},
+				{
+					Provider: ProviderNameNginxProxy,
+					From: Address{
+						Domain:  "service2.example.org",
+						Address: "service2.example.org/api",
+						Port:    "9000",
+					},
+				},
+				{
+					Provider: ProviderNameNginxProxy,
+					From: Address{
+						Domain:  "service2.example.org",
+						Address: "service2.example.org/healthz",
+					},
+				},
+				{
+					Provider: ProviderNameNginxProxy,
+					From: Address{
+						Domain:  "www.example.org",
+						Address: "www.example.org/",
+					},
+				},
+			},
+		},
 	}
 
 	provider := NewNginxProxyProvider()
