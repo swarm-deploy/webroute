@@ -24,7 +24,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4 # action page: <https://github.com/actions/setup-go>
         with:
-          go-version: stable
+          go-version-file: go.mod
 
       - name: Install Go dependencies
         run: go mod download
