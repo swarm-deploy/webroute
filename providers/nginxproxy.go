@@ -1,8 +1,9 @@
-package webroute
+package providers
 
 import (
 	"context"
 	"fmt"
+	"github.com/swarm-deploy/webroute/api"
 	"net/url"
 	"sort"
 	"strings"
@@ -25,7 +26,7 @@ func NewNginxProxyProvider() *NginxProxyProvider {
 }
 
 // Resolve resolves nginx-proxy routes from env values.
-func (*NginxProxyProvider) Resolve(_ context.Context, service Service) ([]Route, error) {
+func (*NginxProxyProvider) Resolve(_ context.Context, service api.Service) ([]api.WebRoute, error) {
 	env, err := service.Environment()
 	if err != nil {
 		return nil, fmt.Errorf("get environment variables: %w", err)
@@ -53,7 +54,7 @@ func (*NginxProxyProvider) Resolve(_ context.Context, service Service) ([]Route,
 	virtualPath := normalizeNginxPath(env[nginxVirtualPathKey])
 	virtualPort := strings.TrimSpace(env[nginxVirtualPortKey])
 
-	routes := make([]Route, 0)
+	routes := make([]api.WebRoute, 0)
 	for _, host := range strings.Split(virtualHosts, ",") {
 		domain := strings.TrimSpace(host)
 		if domain == "" {
@@ -61,9 +62,9 @@ func (*NginxProxyProvider) Resolve(_ context.Context, service Service) ([]Route,
 		}
 		routeDomain, routeHost := parseNginxHost(domain)
 
-		routes = append(routes, Route{
-			Provider: ProviderNameNginxProxy,
-			From: Address{
+		routes = append(routes, api.WebRoute{
+			Provider: api.ProviderNameNginxProxy,
+			From: api.Address{
 				Domain:  routeDomain,
 				Address: nginxRouteAddress(routeHost, virtualPath),
 				Port:    virtualPort,
@@ -74,7 +75,7 @@ func (*NginxProxyProvider) Resolve(_ context.Context, service Service) ([]Route,
 	return routes, nil
 }
 
-func resolveNginxMultiportRoutes(raw string) ([]Route, error) {
+func resolveNginxMultiportRoutes(raw string) ([]api.WebRoute, error) {
 	var hosts map[string]yaml.Node
 	if err := yaml.Unmarshal([]byte(raw), &hosts); err != nil {
 		return nil, fmt.Errorf("parse %s: %w", nginxVirtualHostMultiportsKey, err)
@@ -86,7 +87,7 @@ func resolveNginxMultiportRoutes(raw string) ([]Route, error) {
 	}
 	sort.Strings(hostNames)
 
-	routes := make([]Route, 0)
+	routes := make([]api.WebRoute, 0)
 	for _, host := range hostNames {
 		hostDomain, routeHost := parseNginxHost(host)
 		if hostDomain == "" {
@@ -100,9 +101,9 @@ func resolveNginxMultiportRoutes(raw string) ([]Route, error) {
 	return routes, nil
 }
 
-func resolveNginxMultiportHostRoutes(routeHost string, hostDomain string, hostConfig yaml.Node) []Route {
+func resolveNginxMultiportHostRoutes(routeHost string, hostDomain string, hostConfig yaml.Node) []api.WebRoute {
 	if hostConfig.Kind != yaml.MappingNode {
-		return []Route{newNginxRoute(routeHost, hostDomain, "/", "")}
+		return []api.WebRoute{newNginxRoute(routeHost, hostDomain, "/", "")}
 	}
 
 	type pathRoute struct {
@@ -127,10 +128,10 @@ func resolveNginxMultiportHostRoutes(routeHost string, hostDomain string, hostCo
 	})
 
 	if len(pathRoutes) == 0 {
-		return []Route{newNginxRoute(routeHost, hostDomain, "/", "")}
+		return []api.WebRoute{newNginxRoute(routeHost, hostDomain, "/", "")}
 	}
 
-	routes := make([]Route, 0, len(pathRoutes))
+	routes := make([]api.WebRoute, 0, len(pathRoutes))
 	for _, pathRoute := range pathRoutes {
 		routes = append(routes, newNginxRoute(routeHost, hostDomain, pathRoute.path, pathRoute.port))
 	}
@@ -164,10 +165,10 @@ func nginxMultiportPathPort(pathConfig *yaml.Node) string {
 	return ""
 }
 
-func newNginxRoute(routeHost string, hostDomain string, path string, port string) Route {
-	return Route{
-		Provider: ProviderNameNginxProxy,
-		From: Address{
+func newNginxRoute(routeHost string, hostDomain string, path string, port string) api.WebRoute {
+	return api.WebRoute{
+		Provider: api.ProviderNameNginxProxy,
+		From: api.Address{
 			Domain:  hostDomain,
 			Address: nginxRouteAddress(routeHost, path),
 			Port:    strings.TrimSpace(port),

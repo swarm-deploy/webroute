@@ -7,17 +7,19 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/swarm-deploy/webroute/api"
+	"github.com/swarm-deploy/webroute/providers"
 )
 
 func TestAgentgatewayProvider_Resolve(t *testing.T) {
 	tests := []struct {
 		Title    string
-		Service  Service
-		Expected []Route
+		Service  api.Service
+		Expected []api.WebRoute
 	}{
 		{
 			Title: "routes from yaml config",
-			Service: &testService{configs: []ServiceConfig{
+			Service: &testService{configs: []api.ServiceConfig{
 				testConfig{
 					path: "/etc/agentgateway/config.yaml",
 					body: `
@@ -40,106 +42,106 @@ routes:
 `,
 				},
 			}},
-			Expected: []Route{
+			Expected: []api.WebRoute{
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "api.example.com",
 						Address: "api.example.com:3000/api",
 						Port:    "3000",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api",
 						Address: "api:8080",
 						Port:    "8080",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "api.example.com",
 						Address: "api.example.com:3000/api",
 						Port:    "3000",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api-canary",
 						Address: "api-canary:8081/internal",
 						Port:    "8081",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "api.example.com",
 						Address: "api.example.com:3000/healthz",
 						Port:    "3000",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api",
 						Address: "api:8080",
 						Port:    "8080",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "api.example.com",
 						Address: "api.example.com:3000/healthz",
 						Port:    "3000",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api-canary",
 						Address: "api-canary:8081/internal",
 						Port:    "8081",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "admin.example.com",
 						Address: "admin.example.com:8443/api",
 						Port:    "8443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api",
 						Address: "api:8080",
 						Port:    "8080",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "admin.example.com",
 						Address: "admin.example.com:8443/api",
 						Port:    "8443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api-canary",
 						Address: "api-canary:8081/internal",
 						Port:    "8081",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "admin.example.com",
 						Address: "admin.example.com:8443/healthz",
 						Port:    "8443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api",
 						Address: "api:8080",
 						Port:    "8080",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "admin.example.com",
 						Address: "admin.example.com:8443/healthz",
 						Port:    "8443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "api-canary",
 						Address: "api-canary:8081/internal",
 						Port:    "8081",
@@ -149,7 +151,7 @@ routes:
 		},
 		{
 			Title: "ignores non yaml configs and supports route defaults",
-			Service: &testService{configs: []ServiceConfig{
+			Service: &testService{configs: []api.ServiceConfig{
 				testConfig{
 					path: "/etc/agentgateway/plain.conf",
 					body: "this is not yaml: :",
@@ -176,25 +178,25 @@ routes:
 `,
 				},
 			}},
-			Expected: []Route{
+			Expected: []api.WebRoute{
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Address: "/",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "localhost",
 						Address: "localhost:8000",
 						Port:    "8000",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "www.example.com",
 						Address: "www.example.com/",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "web",
 						Address: "web:3000",
 						Port:    "3000",
@@ -204,7 +206,7 @@ routes:
 		},
 		{
 			Title: "route without backend",
-			Service: &testService{configs: []ServiceConfig{
+			Service: &testService{configs: []api.ServiceConfig{
 				testConfig{
 					path: "/etc/agentgateway/config.yaml",
 					body: `
@@ -217,10 +219,10 @@ routes:
 `,
 				},
 			}},
-			Expected: []Route{
+			Expected: []api.WebRoute{
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Domain:  "status.example.com",
 						Address: "status.example.com/^/status/[0-9]+$",
 					},
@@ -234,7 +236,7 @@ routes:
 					"MCP_PUBLIC_PORT":   "443",
 					"POSTGRES_MCP_HOST": "postgres-mcp-core",
 				},
-				configs: []ServiceConfig{
+				configs: []api.ServiceConfig{
 					testConfig{
 						path: "/etc/agentgateway/config.yaml",
 						body: `
@@ -271,26 +273,26 @@ routes:
 					},
 				},
 			},
-			Expected: []Route{
+			Expected: []api.WebRoute{
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Address: "/mcp/postgres/db/core",
 						Port:    "443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "postgres-mcp-core",
 						Address: "postgres-mcp-core:8000/mcp",
 						Port:    "8000",
 					},
 				},
 				{
-					Provider: ProviderNameAgentgateway,
-					From: Address{
+					Provider: api.ProviderNameAgentgateway,
+					From: api.Address{
 						Address: "/.well-known/oauth-protected-resource/mcp/postgres/db/core",
 						Port:    "443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "postgres-mcp-core",
 						Address: "postgres-mcp-core:8000/mcp",
 						Port:    "8000",
@@ -300,7 +302,7 @@ routes:
 		},
 	}
 
-	provider := NewAgentgatewayProvider()
+	provider := providers.NewAgentgatewayProvider()
 
 	for _, test := range tests {
 		t.Run(test.Title, func(t *testing.T) {
@@ -315,9 +317,9 @@ routes:
 func TestAgentgatewayProvider_ResolvePassesContextToConfigRead(t *testing.T) {
 	type contextKey struct{}
 
-	provider := NewAgentgatewayProvider()
+	provider := providers.NewAgentgatewayProvider()
 	ctx := context.WithValue(context.Background(), contextKey{}, "caller context")
-	service := &testService{configs: []ServiceConfig{
+	service := &testService{configs: []api.ServiceConfig{
 		testConfig{
 			path: "/etc/agentgateway/config.yaml",
 			read: func(ctx context.Context, out io.Writer) error {
