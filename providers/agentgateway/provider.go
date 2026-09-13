@@ -1,4 +1,4 @@
-package providers
+package agentgateway
 
 import (
 	"bytes"
