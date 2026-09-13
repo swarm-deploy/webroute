@@ -1,10 +1,6 @@
 package nginxproxy
 
 import (
-	"context"
-	"io"
-	"strings"
-
 	"github.com/swarm-deploy/webroute/api"
 )
 
@@ -19,23 +15,4 @@ func (s *testService) Environment() (map[string]string, error) {
 
 func (s *testService) Configs() []api.ServiceConfig {
 	return s.configs
-}
-
-type testConfig struct {
-	path string
-	body string
-	read func(context.Context, io.Writer) error
-}
-
-func (c testConfig) Path() string {
-	return c.path
-}
-
-func (c testConfig) Read(ctx context.Context, out io.Writer) error {
-	if c.read != nil {
-		return c.read(ctx, out)
-	}
-
-	_, err := io.Copy(out, strings.NewReader(c.body))
-	return err
 }

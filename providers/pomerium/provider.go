@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/swarm-deploy/webroute/api"
 	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/swarm-deploy/webroute/api"
 	"gopkg.in/yaml.v3"
 )
 

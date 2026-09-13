@@ -3,11 +3,11 @@ package nginxproxy
 import (
 	"context"
 	"fmt"
-	"github.com/swarm-deploy/webroute/api"
 	"net/url"
 	"sort"
 	"strings"
 
+	"github.com/swarm-deploy/webroute/api"
 	"gopkg.in/yaml.v3"
 )
 
