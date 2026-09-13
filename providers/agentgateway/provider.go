@@ -1,4 +1,4 @@
-package webroute
+package agentgateway
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/buildkite/interpolate"
+	"github.com/swarm-deploy/webroute/api"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,8 +21,8 @@ func NewAgentgatewayProvider() *AgentgatewayProvider {
 }
 
 // Resolve resolves agentgateway HTTP routes from mounted YAML configs.
-func (*AgentgatewayProvider) Resolve(ctx context.Context, service Service) ([]Route, error) {
-	var routes []Route
+func (*AgentgatewayProvider) Resolve(ctx context.Context, service api.Service) ([]api.WebRoute, error) {
+	var routes []api.WebRoute
 	var env map[string]string
 	envLoaded := false
 
@@ -52,9 +53,9 @@ func (*AgentgatewayProvider) Resolve(ctx context.Context, service Service) ([]Ro
 
 func resolveAgentgatewayConfigRoutes(
 	ctx context.Context,
-	config ServiceConfig,
+	config api.ServiceConfig,
 	env map[string]string,
-) ([]Route, error) {
+) ([]api.WebRoute, error) {
 	var b bytes.Buffer
 	if err := config.Read(ctx, &b); err != nil {
 		return nil, fmt.Errorf("read agentgateway config %q: %w", config.Path(), err)
@@ -84,8 +85,8 @@ func resolveAgentgatewayRoutes(
 	configRoutes []agentgatewayConfigRoute,
 	gatewayPort string,
 	env interpolate.Env,
-) ([]Route, error) {
-	var routes []Route
+) ([]api.WebRoute, error) {
+	var routes []api.WebRoute
 	for _, configRoute := range configRoutes {
 		if !isAgentgatewayRoute(configRoute) {
 			continue
@@ -107,7 +108,7 @@ func resolveAgentgatewayRoute(
 	configRoute agentgatewayConfigRoute,
 	gatewayPort string,
 	env interpolate.Env,
-) ([]Route, error) {
+) ([]api.WebRoute, error) {
 	fromValues, err := agentgatewayFromValues(configRoute, env)
 	if err != nil {
 		return nil, fmt.Errorf("interpolate agentgateway route match in %q: %w", configPath, err)
@@ -118,7 +119,7 @@ func resolveAgentgatewayRoute(
 		return nil, fmt.Errorf("interpolate agentgateway route backend in %q: %w", configPath, err)
 	}
 
-	var routes []Route
+	var routes []api.WebRoute
 	for _, fromValue := range fromValues {
 		from, parseErr := agentgatewayFromAddress(fromValue.Hostname, fromValue.Path, gatewayPort)
 		if parseErr != nil {
@@ -136,23 +137,23 @@ func resolveAgentgatewayRoute(
 	return routes, nil
 }
 
-func agentgatewayRoutesForFrom(configPath string, from Address, toValues []string) ([]Route, error) {
+func agentgatewayRoutesForFrom(configPath string, from api.Address, toValues []string) ([]api.WebRoute, error) {
 	if len(toValues) == 0 {
-		return []Route{{
-			Provider: ProviderNameAgentgateway,
+		return []api.WebRoute{{
+			Provider: api.ProviderNameAgentgateway,
 			From:     from,
 		}}, nil
 	}
 
-	routes := make([]Route, 0, len(toValues))
+	routes := make([]api.WebRoute, 0, len(toValues))
 	for _, toValue := range toValues {
 		to, err := agentgatewayBackendAddress(toValue)
 		if err != nil {
 			return nil, fmt.Errorf("parse agentgateway route backend %q in %q: %w", toValue, configPath, err)
 		}
 
-		routes = append(routes, Route{
-			Provider: ProviderNameAgentgateway,
+		routes = append(routes, api.WebRoute{
+			Provider: api.ProviderNameAgentgateway,
 			From:     from,
 			To:       &to,
 		})
@@ -304,12 +305,12 @@ func interpolateAgentgatewayValue(value string, env interpolate.Env) (string, er
 	return interpolate.Interpolate(env, value)
 }
 
-func agentgatewayFromAddress(hostname, path, defaultPort string) (Address, error) {
+func agentgatewayFromAddress(hostname, path, defaultPort string) (api.Address, error) {
 	hostname = strings.TrimSpace(hostname)
 	path = normalizeAgentgatewayPath(path)
 	defaultPort = strings.TrimSpace(defaultPort)
 	if hostname == "" {
-		return Address{
+		return api.Address{
 			Address: path,
 			Port:    defaultPort,
 		}, nil
@@ -317,10 +318,10 @@ func agentgatewayFromAddress(hostname, path, defaultPort string) (Address, error
 
 	parsed, err := url.Parse("//" + hostname)
 	if err != nil {
-		return Address{}, err
+		return api.Address{}, err
 	}
 	if parsed.Host == "" {
-		return Address{}, fmt.Errorf("expected hostname")
+		return api.Address{}, fmt.Errorf("expected hostname")
 	}
 
 	port := parsed.Port()
@@ -330,29 +331,29 @@ func agentgatewayFromAddress(hostname, path, defaultPort string) (Address, error
 		addressHost += ":" + defaultPort
 	}
 
-	return Address{
+	return api.Address{
 		Address: addressHost + path,
 		Domain:  parsed.Hostname(),
 		Port:    port,
 	}, nil
 }
 
-func agentgatewayBackendAddress(value string) (Address, error) {
+func agentgatewayBackendAddress(value string) (api.Address, error) {
 	value = strings.TrimSpace(value)
 	if value == "" {
-		return Address{}, fmt.Errorf("expected backend host")
+		return api.Address{}, fmt.Errorf("expected backend host")
 	}
 
 	if strings.Contains(value, "://") {
 		parsed, err := url.Parse(value)
 		if err != nil {
-			return Address{}, err
+			return api.Address{}, err
 		}
 		if parsed.Scheme == "" || parsed.Host == "" {
-			return Address{}, fmt.Errorf("expected absolute URL with scheme and host")
+			return api.Address{}, fmt.Errorf("expected absolute URL with scheme and host")
 		}
 
-		return Address{
+		return api.Address{
 			Address: agentgatewayURLAddress(parsed),
 			Domain:  parsed.Hostname(),
 			Port:    parsed.Port(),
@@ -361,13 +362,13 @@ func agentgatewayBackendAddress(value string) (Address, error) {
 
 	parsed, err := url.Parse("//" + value)
 	if err != nil {
-		return Address{}, err
+		return api.Address{}, err
 	}
 	if parsed.Host == "" {
-		return Address{}, fmt.Errorf("expected backend host")
+		return api.Address{}, fmt.Errorf("expected backend host")
 	}
 
-	return Address{
+	return api.Address{
 		Address: parsed.Host + parsed.EscapedPath(),
 		Domain:  parsed.Hostname(),
 		Port:    parsed.Port(),

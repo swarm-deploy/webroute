@@ -1,4 +1,4 @@
-package webroute
+package pomerium
 
 import (
 	"context"
@@ -7,17 +7,18 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/swarm-deploy/webroute/api"
 )
 
 func TestPomeriumProvider_Resolve(t *testing.T) {
 	tests := []struct {
 		Title    string
-		Service  Service
-		Expected []Route
+		Service  api.Service
+		Expected []api.WebRoute
 	}{
 		{
 			Title: "routes from yaml config",
-			Service: &testService{configs: []ServiceConfig{
+			Service: &testService{configs: []api.ServiceConfig{
 				testConfig{
 					path: "/etc/pomerium/config.yaml",
 					body: `
@@ -35,27 +36,27 @@ routes:
 `,
 				},
 			}},
-			Expected: []Route{
+			Expected: []api.WebRoute{
 				{
-					Provider: ProviderNamePomerium,
-					From: Address{
+					Provider: api.ProviderNamePomerium,
+					From: api.Address{
 						Domain:  "app.example.com",
 						Address: "app.example.com",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "app",
 						Address: "app:8080",
 						Port:    "8080",
 					},
 				},
 				{
-					Provider: ProviderNamePomerium,
-					From: Address{
+					Provider: api.ProviderNamePomerium,
+					From: api.Address{
 						Domain:  "admin.example.com",
 						Address: "admin.example.com:8443",
 						Port:    "8443",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "admin",
 						Address: "admin:9443/internal",
 						Port:    "9443",
@@ -65,7 +66,7 @@ routes:
 		},
 		{
 			Title: "ignores non yaml configs and supports upstream list",
-			Service: &testService{configs: []ServiceConfig{
+			Service: &testService{configs: []api.ServiceConfig{
 				testConfig{
 					path: "/etc/pomerium/plain.conf",
 					body: "this is not yaml: :",
@@ -81,26 +82,26 @@ routes:
 `,
 				},
 			}},
-			Expected: []Route{
+			Expected: []api.WebRoute{
 				{
-					Provider: ProviderNamePomerium,
-					From: Address{
+					Provider: api.ProviderNamePomerium,
+					From: api.Address{
 						Domain:  "weighted.example.com",
 						Address: "weighted.example.com",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "app-a",
 						Address: "app-a:8080",
 						Port:    "8080",
 					},
 				},
 				{
-					Provider: ProviderNamePomerium,
-					From: Address{
+					Provider: api.ProviderNamePomerium,
+					From: api.Address{
 						Domain:  "weighted.example.com",
 						Address: "weighted.example.com",
 					},
-					To: &Address{
+					To: &api.Address{
 						Domain:  "app-b",
 						Address: "app-b:8080",
 						Port:    "8080",
@@ -127,7 +128,7 @@ func TestPomeriumProvider_ResolvePassesContextToConfigRead(t *testing.T) {
 
 	provider := NewPomeriumProvider()
 	ctx := context.WithValue(context.Background(), contextKey{}, "caller context")
-	service := &testService{configs: []ServiceConfig{
+	service := &testService{configs: []api.ServiceConfig{
 		testConfig{
 			path: "/etc/pomerium/config.yaml",
 			read: func(ctx context.Context, out io.Writer) error {

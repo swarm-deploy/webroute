@@ -1,7 +1,7 @@
-package webroute
+package api
 
-// Route is a single public endpoint route for a service.
-type Route struct {
+// WebRoute is a single public endpoint route for a service.
+type WebRoute struct {
 	Provider ProviderName `json:"provider"`
 
 	From Address  `json:"from"`

@@ -1,4 +1,4 @@
-package webroute
+package pomerium
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/swarm-deploy/webroute/api"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,8 +21,8 @@ func NewPomeriumProvider() *PomeriumProvider {
 }
 
 // Resolve resolves Pomerium routes from mounted YAML configs.
-func (*PomeriumProvider) Resolve(ctx context.Context, service Service) ([]Route, error) {
-	var routes []Route
+func (*PomeriumProvider) Resolve(ctx context.Context, service api.Service) ([]api.WebRoute, error) {
+	var routes []api.WebRoute
 
 	for _, config := range service.Configs() {
 		if !isPomeriumYAMLConfig(config.Path()) {
@@ -39,7 +40,7 @@ func (*PomeriumProvider) Resolve(ctx context.Context, service Service) ([]Route,
 	return routes, nil
 }
 
-func resolvePomeriumConfigRoutes(ctx context.Context, config ServiceConfig) ([]Route, error) {
+func resolvePomeriumConfigRoutes(ctx context.Context, config api.ServiceConfig) ([]api.WebRoute, error) {
 	var b bytes.Buffer
 	if err := config.Read(ctx, &b); err != nil {
 		return nil, fmt.Errorf("read pomerium config %q: %w", config.Path(), err)
@@ -56,7 +57,7 @@ func resolvePomeriumConfigRoutes(ctx context.Context, config ServiceConfig) ([]R
 		return nil, fmt.Errorf("parse pomerium config %q: %w", config.Path(), err)
 	}
 
-	routes := make([]Route, 0, len(parsed.Routes))
+	routes := make([]api.WebRoute, 0, len(parsed.Routes))
 	for _, configRoute := range parsed.Routes {
 		fromValue := strings.TrimSpace(configRoute.From)
 		if fromValue == "" {
@@ -70,8 +71,8 @@ func resolvePomeriumConfigRoutes(ctx context.Context, config ServiceConfig) ([]R
 
 		toValues := pomeriumToValues(configRoute.To)
 		if len(toValues) == 0 {
-			routes = append(routes, Route{
-				Provider: ProviderNamePomerium,
+			routes = append(routes, api.WebRoute{
+				Provider: api.ProviderNamePomerium,
 				From:     from,
 			})
 			continue
@@ -83,8 +84,8 @@ func resolvePomeriumConfigRoutes(ctx context.Context, config ServiceConfig) ([]R
 				return nil, fmt.Errorf("parse pomerium route to %q in %q: %w", toValue, config.Path(), err)
 			}
 
-			routes = append(routes, Route{
-				Provider: ProviderNamePomerium,
+			routes = append(routes, api.WebRoute{
+				Provider: api.ProviderNamePomerium,
 				From:     from,
 				To:       &to,
 			})
@@ -128,16 +129,16 @@ func pomeriumToValues(node yaml.Node) []string {
 	}
 }
 
-func pomeriumAddress(value string) (Address, error) {
+func pomeriumAddress(value string) (api.Address, error) {
 	parsed, err := url.Parse(value)
 	if err != nil {
-		return Address{}, err
+		return api.Address{}, err
 	}
 	if parsed.Scheme == "" || parsed.Host == "" {
-		return Address{}, fmt.Errorf("expected absolute URL with scheme and host")
+		return api.Address{}, fmt.Errorf("expected absolute URL with scheme and host")
 	}
 
-	return Address{
+	return api.Address{
 		Address: pomeriumURLAddress(parsed),
 		Domain:  parsed.Hostname(),
 		Port:    parsed.Port(),

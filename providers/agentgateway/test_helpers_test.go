@@ -1,21 +1,23 @@
-package webroute
+package agentgateway
 
 import (
 	"context"
 	"io"
 	"strings"
+
+	"github.com/swarm-deploy/webroute/api"
 )
 
 type testService struct {
 	environment map[string]string
-	configs     []ServiceConfig
+	configs     []api.ServiceConfig
 }
 
 func (s *testService) Environment() (map[string]string, error) {
 	return s.environment, nil
 }
 
-func (s *testService) Configs() []ServiceConfig {
+func (s *testService) Configs() []api.ServiceConfig {
 	return s.configs
 }
 
